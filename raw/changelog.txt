@@ -1,0 +1,50 @@
+class.nav.php -> //$this->tabs['kbase'] = array('desc'=>__('Knowledgebase'),'href'=>'kb.php','title'=>__('Knowledgebase')); [140]
+class.nav.php -> //$this->tabs['kbase'] = array('desc'=>__('Knowledgebase'),'href'=>'kb.php','title'=>__('Knowledgebase')); [215 - 217]
+
+-- Tradduccion --
+/osticket/include/client/templates/sidebar.tmpl.php
+línea 23-28
+
+/osticket/index.php
+Línea 33
+
+/osticket/include/i18n/en_US/help/tips/dashboard.staff_directory.yaml
+línea 16-19
+línea 21-25
+
+/osticket/include/i18n/en_US/help/tips/dashboard.dashboard.yaml
+líena 16-70
+
+/osticket/include/i18n/en_US/help/tips/tickets.queue.yaml
+línea 16-100
+
+-- UI --
+Panel de Administrador: 
+    - Configuración:
+        - Agentes: Plantillas
+        - Usuarios: Plantillas
+
+    - Correos electrónicos:
+        -Plantillas: Plantillas por defecto
+
+    - Formularios:
+        /soporte/scp/forms.php
+
+    - Páginas:
+        /soporte/scp/forms.php
+
+-- Permisos --
+    Panel de administrador:
+        - Agentes
+            - Departamentos: Acceso
+
+
+/osticket\include\client\register.inc.php
+preferencias -> zona horaria (comentado)
+
+
+
+
+header.inc.php -> Linea 77
+class.nav.php -> Linea 131
+ticket-view.inc.php -> 739

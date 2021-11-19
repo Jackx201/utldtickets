@@ -1,0 +1,100 @@
+#
+# This is popup help messages for the Staff Panel -> Tickets -> Open
+#
+# Fields:
+# title - Shown in bold at the top of the popover window
+# content - The body of the help popover
+# links - List of links shows below the content
+#   title - Link title
+#   href - href of link (links starting with / are translated to the
+#       helpdesk installation path)
+#
+# The key names such as 'helpdesk_name' should not be translated as they
+# must match the HTML #ids put into the page template.
+#
+---
+search_field:
+    title: Campo de búsqueda
+    content: >
+
+advanced:
+    title: Avanzado
+    content: >
+        Limite sus parámetros de búsqueda. Una vez que haya seleccionado sus criterios de búsqueda avanzada y haya ejecutado la búsqueda, puede exportar los datos en la parte inferior de la página.
+
+open_tickets_table:
+    title: Tabla de Entradas Abiertas
+    content: >
+        Todos los tickets abiertos actualmente y que requieren atención.
+
+ticket:
+    title: Ticket
+    content: >
+
+date:
+    title: Fecha
+    content: >
+
+subject:
+    title: Asunto
+    content: >
+
+from:
+    title: De
+    content: >
+
+priority:
+    title: Prioridad
+    content: >
+
+assigned_to:
+    title: Asignado a
+    content: >
+
+export:
+    title: Exportar
+    content: >
+        Exporte sus datos actualmente a la vista en un archivo CSV. Los archivos CSV se pueden abrir con cualquier software de hoja de cálculo (es decir, Microsoft Excel, Apple Pages, OpenOffice, etc.).
+
+advanced_search_dialog:
+    title: Búsqueda avanzada
+    content: >
+
+
+adv_keyword:
+    title: Búsqueda por palabra clave
+    content: >
+        Busque visitas basadas en el asunto y el cuerpo del mensaje del hilo del ticket, así como todo el contenido textual asociado con los campos personalizados para los usuarios y los tickets.
+
+adv_date_range:
+    title: Buscar por rango de fecha
+    content: >
+        Definition here
+
+merge_types:
+    title: Fusionar tipos
+    content: >
+        <b>Combinar hilos:</b>
+          Los hilos de todas las entradas se mostrarán cronológicamente.</br>
+        <b>Separar hilos:</b>
+          Los hilos de los tickets se mostrarán un ticket a la vez.
+
+child_status:
+    title: Estado del Ticket hijo
+    content: >
+        Todas las entradas de los hijos se establecerán en estado cerrado, ya que todas las entradas del hilo se moverán a la entrada para padres.
+
+parent_status:
+    title: Estado del Ticket padre
+    content: >
+        Si elige establecer un estado de padre, el boleto de padre se cambiará al estado que seleccione. El Ticket en la parte superior de la lista será el boleto para padres.
+
+reply_types:
+    title: Tipos de respuesta
+    content: >
+        <b>Responder a todos:</b>
+          Esta respuesta se envía al usuario y a los colaboradores que elija incluir.</br>
+        <b>Responder al usuario:</b>
+          Esta respuesta se envía solo al usuario, no a los colaboradores.</br>
+        <b>No responder Email:</b>
+          No se envían alertas por correo electrónico, sin embargo, la respuesta del agente es visible para los usuarios al ver el ticket.

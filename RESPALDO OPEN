@@ -1,0 +1,322 @@
+<!-- OPEN.INC.PHP -->
+
+<link rel="stylesheet" href="openstyle.css">
+<script>var showtool = false;</script>
+
+<?php
+if(!defined('OSTCLIENTINC')) die('Access Denied!');
+$info=array();
+if($thisclient && $thisclient->isValid()) {
+    $info=array('id'=>$thisclient->getId(),
+                'name'=>$thisclient->getName(),
+                'email'=>$thisclient->getEmail(),
+                'phone'=>$thisclient->getPhoneNumber());
+
+                //echo($info['id']);
+}
+
+$info=($_POST && $errors)?Format::htmlchars($_POST):$info;
+
+$form = null;
+if (!$info['topicId']) {
+    if (array_key_exists('topicId',$_GET) && preg_match('/^\d+$/',$_GET['topicId']) && Topic::lookup($_GET['topicId']))
+        $info['topicId'] = intval($_GET['topicId']);
+    else
+        $info['topicId'] = $cfg->getDefaultTopicId();
+}
+
+$forms = array();
+if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
+    foreach ($topic->getForms() as $F) {
+        if (!$F->hasAnyVisibleFields())
+            continue;
+        if ($_POST) {
+            $F = $F->instanciate();
+            $F->isValidForClient();
+        }
+        $forms[] = $F->getForm();
+    }
+}
+
+?>
+<h1><?php echo __('Open a New Ticket');?></h1>
+<p><?php echo __('Please fill in the form below to open a new ticket.');?></p>
+<form id="ticketForm" method="post" action="open.php" enctype="multipart/form-data">
+  <?php csrf_token(); ?>
+  <input type="hidden" name="a" value="open">
+  <table width="800" cellpadding="1" cellspacing="0" border="0">
+    <tbody>
+<?php
+        if (!$thisclient) {
+            $uform = UserForm::getUserForm()->getForm($_POST);
+            if ($_POST) $uform->isValid();
+            $uform->render(array('staff' => false, 'mode' => 'create'));
+            
+        }
+        else { ?>
+            <tr><td colspan="2"><hr /></td></tr>
+        <tr><td><?php echo __('Email');?>:</td><td><?php
+            echo $thisclient->getEmail(); ?></td></tr>
+        <tr><td><?php echo __('Client'); ?>:</td><td><?php
+            echo Format::htmlchars($thisclient->getName()); ?></td></tr>
+        <?php } ?>
+    </tbody>
+    <tbody>
+    <tr><td colspan="2"><hr />
+        <div class="form-header" style="margin-bottom:0.5em">
+        <b><?php echo __('Help Topic'); ?></b>
+        </div>
+    </td></tr>
+    <tr>
+        <td colspan="2">
+            <select id="topicId" name="topicId" onchange="javascript:
+                    var data = $(':input[name]', '#dynamic-form').serialize();
+                    showtool = true;
+                    var num = this.value;
+                    console.log(num);
+                    $.ajax(
+                      'ajax.php/form/help-topic/' + this.value,
+                      {
+                        data: data,
+                        dataType: 'json',
+                        success: function(json) {
+                          $('#dynamic-form').empty().append(json.html);
+                          $(document.head).append(json.media);
+                          //console.log(num);
+                          if ( num == 2 ) { document.getElementById('inventario').style.display = 'block'; } else { document.getElementById('inventario').style.display = 'none'; }
+                          if ( num == 2 ) { document.getElementById('crearticket').style.display = 'none'; } else { document.getElementById('crearticket').style.display = 'inline'; }
+                        }
+                      });">
+                <option value="" selected="selected">&mdash; <?php echo __('Select a Help Topic');?> &mdash;</option>
+                <?php
+                if($topics=Topic::getPublicHelpTopics()) {
+                    //Seleccionar tema de ayuda
+                    foreach($topics as $id =>$name) {
+                        echo sprintf('<option value="%d" %s>%s</option>',
+                                $id, ($info['topicId']==$id)?'selected="selected"':'', $name);
+                    }
+                } ?>
+            </select>
+            <font class="error">*&nbsp;<?php echo $errors['topicId']; ?></font>
+        </td>
+    </tr>
+    </tbody>
+    <tbody id="dynamic-form">
+        <?php
+        $options = array('mode' => 'create');
+        foreach ($forms as $form) {
+            include(CLIENTINC_DIR . 'templates/dynamic-form.tmpl.php');
+        } 
+        ?>
+        
+    </tbody>
+    <tbody>
+    <?php
+    if($cfg && $cfg->isCaptchaEnabled() && (!$thisclient || !$thisclient->isValid())) {
+        if($_POST && $errors && !$errors['captcha'])
+            $errors['captcha']=__('Please re-enter the text again');
+        ?>
+    <tr class="captchaRow">
+        <td class="required"><?php echo __('CAPTCHA Text');?>:</td>
+        <td>
+            <span class="captcha"><img src="captcha.php" border="0" align="left"></span>
+            &nbsp;&nbsp;
+            <input id="captcha" type="text" name="captcha" size="6" autocomplete="off">
+            <em><?php echo __('Enter the text shown on the image.');?></em>
+            <font class="error">*&nbsp;<?php echo $errors['captcha']; ?></font>
+        </td>
+    </tr>
+    <?php
+    } ?>
+    <tr><td colspan=2>&nbsp;</td></tr>
+    </tbody>
+  </table>
+
+<div id="inventario" style="display: none;">
+<h1 style="text-align: center;">¿Cuántas unidades necesitas?</h1>
+<br>
+<input type="number" name="qty" id="qty" style="margin-left: 40%; margin-bottom: 5%; text-align: center" placeholder = 1>
+  <!-- Inventario -->
+<?php
+$servername = "localhost";
+$username = "root";
+$password = "QpsT!ssNjK27";
+$dbname = "almacen_utld";
+
+$conn = new mysqli($servername, $username, $password, $dbname);
+if ($conn->connect_error) {
+  die("Ha fallado la conexión con la base de Datos :( : " . $conn->connect_error);
+}
+echo "<h1 id='herramienta' >Herramientas Disponibles:</h1>";
+
+$sql = "SELECT * FROM inventarioutl INNER JOIN catalogo ON inventarioutl.herramienta = catalogo.id INNER JOIN tipo_herramienta ON catalogo.tipo = tipo_herramienta.id";
+$result = $conn->query($sql);
+
+
+
+if ($result->num_rows > 0) {
+    echo (" <table width='800' class='bordered' cellpadding='1' cellspacing='0'>
+    <tr style=''> <th></th> <th>Herramienta</th><th>Disponible</th><th>Categoría</th><th>Solicitar</th></tr>");
+    while($row = $result->fetch_assoc()) {
+        //echo print_r($row);
+      echo "<tr'><td> <input style = 'display: none;' type='hidden' name = 'idusuario' value=".$info['id']."></td> <td>".$row["descripcion"]."</td><td>".$row["qtyf"]."</td><td>".$row["tipo"]."</td><td> <button type='submit' name = 'idherramienta' value=".$row["herramienta"].">Solicitar</button>  </td></tr>";
+    }
+    echo "</table>";
+  } else {
+    echo "No se encontraron herramientas";
+  }
+  $conn->close();
+  ?>
+
+<input readonly>
+  
+  <!-- Inventario -->
+  </div>
+
+<hr/>
+  <p class="buttons" style="text-align:center;">
+        <input type="submit" id="crearticket" value="<?php echo __('Create Ticket');?>">
+        <input type="reset" name="reset" value="<?php echo __('Reset');?>">
+        <input type="button" name="cancel" value="<?php echo __('Cancel'); ?>" onclick="javascript:
+            $('.richtext').each(function() {
+                var redactor = $(this).data('redactor');
+                if (redactor && redactor.opts.draftDelete)
+                    redactor.plugin.draft.deleteDraft();
+            });
+            window.location.href='index.php';">
+  </p>
+</form>
+
+
+
+
+
+<!-- OPEN.PHP -->
+
+
+
+
+
+<?php
+require('client.inc.php');
+define('SOURCE','Web'); //Ticket source.
+$ticket = null;
+$errors=array();
+if ($_POST) {
+
+    //PEDIDOS
+    $topicid = $_POST['topicId'];
+    if($topicid == 2) 
+    {
+                $qty = $_POST['qty'];
+                $idusuario = $_POST['idusuario'];
+                $idherramienta =  $_POST['idherramienta'];
+                $servername = "localhost";
+                $username = "root";
+                $password = "QpsT!ssNjK27";
+                $dbname = "almacen_utld";
+
+                $conn = new mysqli($servername, $username, $password, $dbname);
+                if ($conn->connect_error) {
+                die("Ha fallado la conexión con la base de Datos :( : " . $conn->connect_error);
+                }
+
+                 $sql = "INSERT INTO peticiones (solicitante, fecha)
+                 VALUES ('$idusuario', NOW());";
+                 $result = $conn->query($sql);
+                 $last_id = mysqli_insert_id($conn);
+                 
+                 $sql1 = "INSERT INTO detalle_peticion (herramienta, qty_peticion, peticion_id)
+                 VALUES ('$idherramienta', '$qty', (SELECT id FROM peticiones WHERE id = '$last_id' LIMIT 1 ));";
+                 $result1 = $conn->query($sql1);
+
+                 $sql2 = "SELECT * FROM detalle_peticion";
+                 $result2 = $conn->query($sql2);
+
+                $conn->close();
+    }
+    // PEDIDOS
+
+
+    $vars = $_POST;
+    $vars['deptId']=$vars['emailId']=0; //Just Making sure we don't accept crap...only topicId is expected.
+    if ($thisclient) {
+        $vars['uid']=$thisclient->getId();
+        
+    } elseif($cfg->isCaptchaEnabled()) {
+        if(!$_POST['captcha'])
+            $errors['captcha']=__('Enter text shown on the image');
+        elseif(strcmp($_SESSION['captcha'], md5(strtoupper($_POST['captcha']))))
+            $errors['captcha']=sprintf('%s - %s', __('Invalid'), __('Please try again!'));
+    }
+
+    $tform = TicketForm::objects()->one()->getForm($vars);
+    $messageField = $tform->getField('message');
+    $attachments = $messageField->getWidget()->getAttachments();
+    if (!$errors) {
+        $vars['message'] = $messageField->getClean();
+        if ($messageField->isAttachmentsEnabled())
+            $vars['files'] = $attachments->getFiles();
+    }
+
+    // Drop the draft.. If there are validation errors, the content
+    // submitted will be displayed back to the user
+    Draft::deleteForNamespace('ticket.client.'.substr(session_id(), -12));
+    //Ticket::create...checks for errors..
+    if(($ticket=Ticket::create($vars, $errors, SOURCE))){
+        $msg=__('Support ticket request created');
+        // Drop session-backed form data
+        unset($_SESSION[':form-data']);
+        //Logged in...simply view the newly created ticket.
+        if($thisclient && $thisclient->isValid()) {
+            session_regenerate_id();
+            session_write_close();
+            @header('Location: tickets.php?id='.$ticket->getId());
+        } else
+            $ost->getCSRF()->rotate();
+    }else{
+        $errors['err'] = $errors['err'] ?: sprintf('%s %s',
+            __('Unable to create a ticket.'),
+            __('Correct any errors below and try again.'));
+    }
+}
+
+//page
+$nav->setActiveNav('new');
+if ($cfg->isClientLoginRequired()) {
+    if ($cfg->getClientRegistrationMode() == 'disabled') {
+        Http::redirect('view.php');
+    }
+    elseif (!$thisclient) {
+        require_once 'secure.inc.php';
+    }
+    elseif ($thisclient->isGuest()) {
+        require_once 'login.php';
+        exit();
+    }
+}
+
+require(CLIENTINC_DIR.'header.inc.php');
+if ($ticket
+    && (
+        (($topic = $ticket->getTopic()) && ($page = $topic->getPage()))
+        || ($page = $cfg->getThankYouPage())
+    )
+) {
+    // Thank the user and promise speedy resolution!
+    echo Format::viewableImages(
+        $ticket->replaceVars(
+            $page->getLocalBody()
+        ),
+        ['type' => 'P']
+    );
+}
+else {
+    require(CLIENTINC_DIR.'open.inc.php');
+}
+require(CLIENTINC_DIR.'footer.inc.php');
+
+// https://www.py4u.net/discuss/787313
+
+?>
+
